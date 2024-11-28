@@ -7,9 +7,11 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -17,6 +19,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import java.security.SecureRandom;
 import java.security.spec.KeySpec;
+import java.util.Arrays;
 import java.util.Base64;
 
 import javax.crypto.SecretKeyFactory;
@@ -24,9 +27,10 @@ import javax.crypto.spec.PBEKeySpec;
 
 public class RegisterActivity extends AppCompatActivity {
 
-    EditText fullnameEditText, passwordEditText, dobEditText,rPasswordEditText, refnumEditText;
+    EditText fullnameEditText, passwordEditText,rPasswordEditText, refnumEditText;
     DBHandler dbHandler;
     Button register;
+    TextView test;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,24 +43,14 @@ public class RegisterActivity extends AppCompatActivity {
             return insets;
         });
 
-        fullnameEditText = findViewById(R.id.nameInputField);
-        passwordEditText = findViewById(R.id.passwordInputField);
-        rPasswordEditText = findViewById(R.id.rPasswordInputField);
-        refnumEditText = findViewById(R.id.refnumInputField);
-        dobEditText = findViewById(R.id.dobInputField);
+        dbHandler = new DBHandler(this);
 
+        test = findViewById(R.id.loginTestRegister);
 
-
-        String fullname = fullnameEditText.getText().toString().trim();
-        String password = passwordEditText.getText().toString().trim();
-        String rPassword = rPasswordEditText.getText().toString().trim();
-        String stringDob = dobEditText.getText().toString().trim();
-        Integer dob = Integer.parseInt(stringDob);
-        String refnum = refnumEditText.getText().toString().trim();
-        Integer ref = Integer.parseInt(refnum);
-
-        String hashedPassword = hashPassword(password);
-        String hashedRPassword = hashPassword(rPassword);
+        EditText fullnameEditText = findViewById(R.id.nameInputField);
+        EditText passwordEditText = findViewById(R.id.passwordInputField);
+        EditText rPasswordEditText = findViewById(R.id.rPasswordInputField);
+        EditText refnumEditText = findViewById(R.id.refnumInputField);
 
         register = findViewById(R.id.registerButton);
 
@@ -64,44 +58,56 @@ public class RegisterActivity extends AppCompatActivity {
         register.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                //Gather inputs
+                String fullname = fullnameEditText.getText().toString().trim();
+                String password = passwordEditText.getText().toString().trim();
+                String rPassword = rPasswordEditText.getText().toString().trim();
+                String refnum = refnumEditText.getText().toString().trim();
+
                 //Validate inputs
-                if (validateInput(fullname, hashedPassword, dob) && hashedPassword == hashedRPassword) {
+                if (validateInput(fullname, password,refnum) && password.equals(rPassword)) {
+                    int ref = Integer.parseInt(refnum);
+
+                    byte[] salt = getBytes();
+                    //Hash the password
+                    String hashedPassword = hashPassword(password,salt);
 
                     //Check if user exists
-                    if (dbHandler.userExists(fullname, dob)) {
-                        Toast.makeText(RegisterActivity.this, "User already exists", Toast.LENGTH_SHORT).show();
-                    } else {
+                    if (!dbHandler.userExists(fullname)) {
 
-                        //If user doesnt exist, add them to the database
-                        int userID = Math.toIntExact(dbHandler.addUser(fullname, hashedPassword, dob, ref));
-                        Toast.makeText(RegisterActivity.this, "User added", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(RegisterActivity.this, Arrays.toString(salt), Toast.LENGTH_SHORT).show();
+                        Log.d("SECURE_LOGIN", "Password hashing failed"+ salt);
 
+                        int userID = Math.toIntExact(dbHandler.addUser(fullname, hashedPassword, ref,salt));
                         //Reference can be given by the hospital to ensure only valid people sign up
-                        if (ref > 10000) {
-                            Intent i = new Intent(RegisterActivity.this, UserDashboardActivity.class);
-                            i.putExtra("id",userID);
-                            startActivity(i);
+                        Intent i = new Intent(RegisterActivity.this, UserDashboardActivity.class);
+                        i.putExtra("id",userID);
+                        if (ref > 1000) {
+                            i.putExtra("access","doctor");
                         } else {
-                            startActivity(new Intent(RegisterActivity.this, UserDashboardActivity.class));
+                            i.putExtra("access","patient");
                         }
+                        startActivity(i);
+                    }else {
+                        Toast.makeText(RegisterActivity.this, "Account exists", Toast.LENGTH_SHORT).show();
                     }
+
+                } else {
+                    Toast.makeText(RegisterActivity.this, "Invalid Input" , Toast.LENGTH_LONG).show();
                 }
             }
         });
 
     }
 
-    private boolean validateInput(String fullname, String password, Integer dob) {
-        // Check if any field is emp
-        return !fullname.isEmpty() && !password.isEmpty() && !String.valueOf(dob).isEmpty() &&
+    private boolean validateInput(String fullname, String password, String refnum) {
+        // Check if any field is empty
+        return !fullname.isEmpty() && !password.isEmpty() && !refnum.isEmpty() &&
                 password.matches("^(?=.*[0-9])(?=.*[A-Z])(?=.*[a-z]).{8,}$"); // Password must meet criteria
     }
-    private String hashPassword(String password) {
+    private String hashPassword(String password, byte[] salt) {
         try {
-            // Generate a random salt
-            byte[] salt = new byte[16];
-            SecureRandom random = new SecureRandom();
-            random.nextBytes(salt);
 
             // Specify the key specifications for PBKDF2
             KeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 65536, 256);
@@ -120,6 +126,13 @@ public class RegisterActivity extends AppCompatActivity {
             return null; // Return null if an exception occurs
         }
         return password;
+    }
+
+    private static byte[] getBytes() {
+        byte[] salt = new byte[16];
+        SecureRandom random = new SecureRandom();
+        random.nextBytes(salt);
+        return salt;
     }
 
     public void login(View v) {

@@ -17,14 +17,15 @@ public class DBHandler extends SQLiteOpenHelper {
     private static final String PATIENT_ID_COL = "PATIENT_ID";
     private static final String PATIENT_NAME_COL = "FULL_NAME";
     private static final String PATIENT_PASSWORD_COL = "PASSWORD";
-    private static final String PATIENT_DOB_COL = "PATIENT_DOB";
+    private static final String PATIENT_SALT_COL = "SALT";
+
 
     //Doctor table information
     private static final String DOCTOR_TABLE_NAME = "DOCTORTABLE";
     private static final String DOCTOR_ID_COL = "DOCTOR_ID";
     private static final String DOCTOR_NAME_COL = "FULL_NAME";
     private static final String DOCTOR_PASSWORD_COL = "PASSWORD";
-    private static final String DOCTOR_DOB_COL = "DOCTOR_DOB";
+    private static final String DOCTOR_SALT_COL = "SALT";
 
     public DBHandler(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -38,13 +39,13 @@ public class DBHandler extends SQLiteOpenHelper {
                 + PATIENT_ID_COL + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + PATIENT_NAME_COL + " TEXT,"
                 + PATIENT_PASSWORD_COL + " TEXT,"
-                + PATIENT_DOB_COL + " TEXT)";
+                + PATIENT_SALT_COL + " BLOB)";
 
         String query2 = "CREATE TABLE " + DOCTOR_TABLE_NAME + " ("
                 + DOCTOR_ID_COL + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + DOCTOR_NAME_COL + " TEXT,"
                 + DOCTOR_PASSWORD_COL + " TEXT,"
-                + DOCTOR_DOB_COL + " TEXT)";
+                + DOCTOR_SALT_COL + " BLOB)";
 
         // at last we are calling a exec sql
         // method to execute above sql querys
@@ -61,12 +62,12 @@ public class DBHandler extends SQLiteOpenHelper {
         }
     }
 
-    public Integer authenticatePatient(String userName, String userPassword, Integer DOB) {
-        SQLiteDatabase db = this.getWritableDatabase();
+    public Integer authenticatePatient(String userName, String userPassword) {
+        SQLiteDatabase db = this.getReadableDatabase();
 
         String query = "SELECT * FROM " + PATIENT_TABLE_NAME + " WHERE " +
-                PATIENT_NAME_COL + " = ? AND " + PATIENT_PASSWORD_COL + " = ? AND " + PATIENT_DOB_COL + " = ?";
-        Cursor cursor = db.rawQuery(query, new String[]{userName, userPassword, DOB.toString()});
+                PATIENT_NAME_COL + " = ? AND " + PATIENT_PASSWORD_COL + " = ?";
+        Cursor cursor = db.rawQuery(query, new String[]{userName, userPassword});
         if (cursor.getCount() > 0) {
             cursor.moveToFirst();
             Integer id = cursor.getInt(cursor.getColumnIndexOrThrow(PATIENT_ID_COL));
@@ -78,12 +79,12 @@ public class DBHandler extends SQLiteOpenHelper {
         }
     }
 
-    public Integer authenticateDoctor(String userName, String userPassword, Integer DOB) {
+    public Integer authenticateDoctor(String userName, String userPassword) {
         SQLiteDatabase db = this.getReadableDatabase();
 
         String query = "SELECT * FROM " + DOCTOR_TABLE_NAME + " WHERE " +
-                DOCTOR_NAME_COL + " = ? AND " + DOCTOR_PASSWORD_COL + " = ? AND " + DOCTOR_DOB_COL + " = ?";
-        Cursor cursor = db.rawQuery(query, new String[]{userName, userPassword, DOB.toString()});
+                DOCTOR_NAME_COL + " = ? AND " + DOCTOR_PASSWORD_COL + " = ?";
+        Cursor cursor = db.rawQuery(query, new String[]{userName, userPassword});
         if (cursor.getCount() > 0) {
             cursor.moveToFirst();
             Integer id = cursor.getInt(cursor.getColumnIndexOrThrow(DOCTOR_ID_COL));
@@ -95,45 +96,62 @@ public class DBHandler extends SQLiteOpenHelper {
         }
     }
 
-    public boolean userExists(String userName, Integer DOB) {
-        SQLiteDatabase db = this.getWritableDatabase();
-
-        //Check if user is in patient table
-        String query = "SELECT * FROM " + PATIENT_TABLE_NAME + " WHERE " +
-                PATIENT_NAME_COL + " = ? AND " + PATIENT_DOB_COL + " = ?";
-        Cursor cursor = db.rawQuery(query, new String[]{userName, DOB.toString() });
-        if (cursor.getCount() > 0) {
-            cursor.close();
-            return true;
-        }
-
-        //Check if user is in doctor table
-        String query2 = "SELECT * FROM " + DOCTOR_TABLE_NAME + " WHERE " +
-                DOCTOR_NAME_COL + " = ? AND " + DOCTOR_DOB_COL + " = ?";
-        Cursor cursor2 = db.rawQuery(query, new String[]{userName, DOB.toString()});
-        if (cursor2.getCount() > 0) {
-            cursor2.close();
-            return true;
-        }
-        //If the user doesnt exist then return false
-        return false;
-    }
 
     //Add a user based on the sign up code given (ref) to the correct table
-    public Long addUser(String name, String password, Integer DOB, Integer ref) {
+    public Long addUser(String name, String password, Integer ref, byte[] salt) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         if (ref > 10000) {
             values.put(DOCTOR_NAME_COL, name);
             values.put(DOCTOR_PASSWORD_COL, password);
-            values.put(DOCTOR_DOB_COL, DOB);
+            values.put(DOCTOR_SALT_COL, salt);
             return db.insert(DOCTOR_TABLE_NAME, null, values);
         } else {
             values.put(PATIENT_NAME_COL, name);
             values.put(PATIENT_PASSWORD_COL, password);
-            values.put(PATIENT_DOB_COL, DOB);
+            values.put(PATIENT_SALT_COL, salt);
             return db.insert(PATIENT_TABLE_NAME, null, values);
         }
+    }
+
+    public boolean userExists(String userName){
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT * FROM " + PATIENT_TABLE_NAME + " WHERE " +
+                PATIENT_NAME_COL + " = ?";
+        Cursor cursor = db.rawQuery(query, new String[]{userName});
+        if (cursor.getCount() > 0) {
+            cursor.close();
+            return true;
+        }
+        String query2 = "SELECT * FROM " + DOCTOR_TABLE_NAME + " WHERE " +
+                DOCTOR_NAME_COL + " = ?";
+        Cursor cursor2 = db.rawQuery(query2, new String[]{userName});
+        if (cursor2.getCount() > 0) {
+            cursor2.close();
+            return true;
+        }
+        return false;
+    }
+
+    public byte[] getSalt(String userName){
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT * FROM " + PATIENT_TABLE_NAME + " WHERE " + PATIENT_NAME_COL + " = ?";
+        Cursor cursor = db.rawQuery(query, new String[]{userName});
+        if(cursor.getCount() > 0){
+            cursor.moveToFirst();
+            byte[] salt = cursor.getBlob(cursor.getColumnIndexOrThrow(PATIENT_SALT_COL));
+            cursor.close();
+            return salt;
+        }
+        String query2 = "SELECT * FROM " + DOCTOR_TABLE_NAME + " WHERE " + DOCTOR_NAME_COL + " = ?";
+        Cursor cursor2 = db.rawQuery(query2, new String[]{userName});
+        if(cursor2.getCount() > 0){
+            cursor2.moveToFirst();
+            byte[] salt = cursor2.getBlob(cursor2.getColumnIndexOrThrow(DOCTOR_SALT_COL));
+            cursor2.close();
+            return salt;
+        }
+        return null;
     }
 
 
