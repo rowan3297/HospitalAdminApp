@@ -154,11 +154,58 @@ public class DBHandler extends SQLiteOpenHelper {
         return null;
     }
 
+    public ArrayList<String> getDoctors() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        ArrayList<String> doctors = new ArrayList<>();
+        String query = "SELECT * FROM " + DOCTOR_TABLE_NAME;
+        Cursor cursor = db.rawQuery(query, null);
+        if (cursor.moveToFirst()) {
+            do {
+                doctors.add(cursor.getString(cursor.getColumnIndexOrThrow(DOCTOR_NAME_COL)));
+            } while (cursor.moveToNext());
+        }
+        return doctors;
+    }
+
+    public boolean deleteDoctor(String doctorName){
+        SQLiteDatabase db = this.getWritableDatabase();
+        String whereClause = DOCTOR_NAME_COL + " = ?";
+        String[] whereArgs = new String[]{doctorName};
+
+        // Delete the rows and check how many were deleted
+        int rowsDeleted = db.delete(DOCTOR_TABLE_NAME, whereClause, whereArgs);
+        return rowsDeleted > 0;
+    }
+
+    public boolean deletePatient(String patientName){
+        SQLiteDatabase db = this.getWritableDatabase();
+        String whereClause = PATIENT_NAME_COL + " = ?";
+        String[] whereArgs = new String[]{patientName};
+
+        // Delete the rows and check how many were deleted
+        int rowsDeleted = db.delete(PATIENT_TABLE_NAME, whereClause, whereArgs);
+        return rowsDeleted > 0;
+    }
+
+    public ArrayList<String> getPatients() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        ArrayList<String> patients = new ArrayList<>();
+        String query = "SELECT * FROM " + PATIENT_TABLE_NAME;
+        Cursor cursor = db.rawQuery(query, null);
+        if (cursor.moveToFirst()) {
+            do {
+                patients.add(cursor.getString(cursor.getColumnIndexOrThrow(PATIENT_NAME_COL)));
+            } while (cursor.moveToNext());
+        }
+        return patients;
+    }
+
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // this method is called to check if the table exists already.
         db.execSQL("DROP TABLE IF EXISTS " + PATIENT_TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + DOCTOR_TABLE_NAME);
         onCreate(db);
     }
 }

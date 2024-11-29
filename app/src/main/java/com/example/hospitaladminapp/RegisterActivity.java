@@ -77,7 +77,7 @@ public class RegisterActivity extends AppCompatActivity {
                     if (!dbHandler.userExists(fullname)) {
 
                         Toast.makeText(RegisterActivity.this, Arrays.toString(salt), Toast.LENGTH_SHORT).show();
-                        Log.d("SECURE_LOGIN", "Password hashing failed"+ salt);
+//                        Log.d("SECURE_LOGIN", "Password hashing failed"+ salt);
 
                         int userID = Math.toIntExact(dbHandler.addUser(fullname, hashedPassword, ref,salt));
                         //Reference can be given by the hospital to ensure only valid people sign up
@@ -87,9 +87,11 @@ public class RegisterActivity extends AppCompatActivity {
                             i.putExtra("access","doctor");
                         } else {
                             i.putExtra("access","patient");
+                            Toast.makeText(RegisterActivity.this, "You are a patient", Toast.LENGTH_SHORT).show();
                         }
                         startActivity(i);
                     }else {
+                        //User already exists
                         Toast.makeText(RegisterActivity.this, "Account exists", Toast.LENGTH_SHORT).show();
                     }
 

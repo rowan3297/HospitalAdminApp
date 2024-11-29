@@ -80,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
                         i.putExtra("id",userID);
                         i.putExtra("permissions","patient");
                         startActivity(i);
+
                     }
                     else {
                         Toast.makeText(MainActivity.this, "User doesnt exist", Toast.LENGTH_SHORT).show();
