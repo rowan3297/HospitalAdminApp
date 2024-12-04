@@ -72,13 +72,13 @@ public class MainActivity extends AppCompatActivity {
                         int userID = dbHandler.authenticateDoctor(fullname, hashedPassword);
                         Intent i = new Intent(MainActivity.this, UserDashboardActivity.class);
                         i.putExtra("id",userID);
-                        i.putExtra("permissions","doctor");
+                        i.putExtra("access","doctor");
                         startActivity(i);
                     } else if (dbHandler.authenticatePatient(fullname, hashedPassword) != -1) {
                         int userID = dbHandler.authenticatePatient(fullname, hashedPassword);
                         Intent i = new Intent(MainActivity.this, UserDashboardActivity.class);
                         i.putExtra("id",userID);
-                        i.putExtra("permissions","patient");
+                        i.putExtra("access","patient");
                         startActivity(i);
 
                     }

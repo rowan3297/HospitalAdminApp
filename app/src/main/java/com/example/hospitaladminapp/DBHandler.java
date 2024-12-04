@@ -1,5 +1,7 @@
 package com.example.hospitaladminapp;
 
+import static java.util.Collections.emptyList;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -27,6 +29,14 @@ public class DBHandler extends SQLiteOpenHelper {
     private static final String DOCTOR_PASSWORD_COL = "PASSWORD";
     private static final String DOCTOR_SALT_COL = "SALT";
 
+    //Appointment table information
+    private static final String APPOINTMENT_TABLE_NAME = "APPOINTMENTSTABLE";
+    private static final String APPOINTMENT_ID_COL = "APPOINTMENT_ID";
+    private static final String APPOINTMENT_PATIENT_ID_COL = "PATIENT_ID";
+    private static final String APPOINTMENT_DOCTOR_ID_COL = "DOCTOR_ID";
+    private static final String APPOINTMENT_DATE_COL = "DATE";
+    private static final String APPOINTMENT_TIME_COL = "TIME";
+
     public DBHandler(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
     }
@@ -47,10 +57,20 @@ public class DBHandler extends SQLiteOpenHelper {
                 + DOCTOR_PASSWORD_COL + " TEXT,"
                 + DOCTOR_SALT_COL + " BLOB)";
 
+        String query3 = "CREATE TABLE " + APPOINTMENT_TABLE_NAME + " ("
+            + APPOINTMENT_ID_COL + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+            + APPOINTMENT_PATIENT_ID_COL + " INTEGER,"
+            + APPOINTMENT_DOCTOR_ID_COL + " INTEGER,"
+            + APPOINTMENT_DATE_COL + " TEXT,"
+            + APPOINTMENT_TIME_COL + " TEXT,"
+            + "FOREIGN KEY(" + APPOINTMENT_PATIENT_ID_COL + ") REFERENCES " + PATIENT_TABLE_NAME + "(" + PATIENT_ID_COL + "),"
+            + "FOREIGN KEY(" + APPOINTMENT_DOCTOR_ID_COL + ") REFERENCES " + DOCTOR_TABLE_NAME + "(" + DOCTOR_ID_COL + "))";
+
         // at last we are calling a exec sql
         // method to execute above sql querys
         db.execSQL(query);
         db.execSQL(query2);
+        db.execSQL(query3);
     }
 
     @Override
@@ -169,6 +189,15 @@ public class DBHandler extends SQLiteOpenHelper {
 
     public boolean deleteDoctor(String doctorName){
         SQLiteDatabase db = this.getWritableDatabase();
+        int id = getDoctorId(doctorName);
+        if(id == -1){
+            return false;
+        }
+        Cursor cursor = db.rawQuery("SELECT * FROM " + APPOINTMENT_TABLE_NAME + " WHERE " + APPOINTMENT_DOCTOR_ID_COL + " = ?", new String[]{String.valueOf(id)});
+        if(cursor.getCount() > 0){
+            return false;
+        }
+
         String whereClause = DOCTOR_NAME_COL + " = ?";
         String[] whereArgs = new String[]{doctorName};
 
@@ -179,6 +208,16 @@ public class DBHandler extends SQLiteOpenHelper {
 
     public boolean deletePatient(String patientName){
         SQLiteDatabase db = this.getWritableDatabase();
+        int id = getPatientId(patientName);
+        if (id == -1){
+            return false;
+        }
+        Cursor cursor = db.rawQuery("SELECT * FROM " + APPOINTMENT_TABLE_NAME + " WHERE " + APPOINTMENT_PATIENT_ID_COL + " = ?", new String[]{String.valueOf(id)});
+        if(cursor.getCount() > 0){
+            return false;
+        }
+
+
         String whereClause = PATIENT_NAME_COL + " = ?";
         String[] whereArgs = new String[]{patientName};
 
@@ -198,6 +237,106 @@ public class DBHandler extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
         return patients;
+    }
+
+    public ArrayList<HashMap<String,String>> getAppointments(int id, String access){
+        SQLiteDatabase db = this.getReadableDatabase();
+        ArrayList<HashMap<String,String>> appointments = new ArrayList<>();
+        Cursor cursor;
+        if (access.equals("doctor")){
+            String query = "SELECT * FROM " + APPOINTMENT_TABLE_NAME + " WHERE " + APPOINTMENT_DOCTOR_ID_COL + " = ?";
+            cursor = db.rawQuery(query, new String[]{String.valueOf(id)});
+        } else if (access.equals("patient")) {
+            String query = "SELECT * FROM " + APPOINTMENT_TABLE_NAME + " WHERE " + APPOINTMENT_PATIENT_ID_COL + " = ?";
+            cursor = db.rawQuery(query, new String[]{String.valueOf(id)});
+        } else {
+            return appointments;
+        }
+        if (cursor.moveToFirst()) {
+            do {
+                HashMap<String,String> appointment = new HashMap<>();
+                appointment.put("id", cursor.getString(cursor.getColumnIndexOrThrow(APPOINTMENT_ID_COL)));
+                appointment.put("date", cursor.getString(cursor.getColumnIndexOrThrow(APPOINTMENT_DATE_COL)));
+                appointment.put("time", cursor.getString(cursor.getColumnIndexOrThrow(APPOINTMENT_TIME_COL)));
+                appointment.put("doctor", getDoctorName(cursor.getInt(cursor.getColumnIndexOrThrow(APPOINTMENT_DOCTOR_ID_COL))));
+                appointment.put("patient", getPatientName(cursor.getInt(cursor.getColumnIndexOrThrow(APPOINTMENT_PATIENT_ID_COL))));
+                appointments.add(appointment);
+            } while (cursor.moveToNext());
+            return appointments;
+        }else{
+            return appointments;
+        }
+    }
+
+    public String getDoctorName(int id){
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT * FROM " + DOCTOR_TABLE_NAME + " WHERE " + DOCTOR_ID_COL + " = ?";
+        Cursor cursor = db.rawQuery(query, new String[]{String.valueOf(id)});
+        if(cursor.moveToFirst()){
+            return cursor.getString(cursor.getColumnIndexOrThrow(DOCTOR_NAME_COL));
+        } else {
+            return null;
+        }
+    }
+
+    public String getPatientName(int id){
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT * FROM " + PATIENT_TABLE_NAME + " WHERE " + PATIENT_ID_COL + " = ?";
+        Cursor cursor = db.rawQuery(query, new String[]{String.valueOf(id)});
+        if(cursor.moveToFirst()){
+            return cursor.getString(cursor.getColumnIndexOrThrow(PATIENT_NAME_COL));
+        } else {
+            return null;
+        }
+    }
+
+    public int getPatientId(String name){
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT * FROM " + PATIENT_TABLE_NAME + " WHERE " + PATIENT_NAME_COL + " = ?";
+        Cursor cursor = db.rawQuery(query, new String[]{name});
+        if(cursor.moveToFirst()){
+            return cursor.getInt(cursor.getColumnIndexOrThrow(PATIENT_ID_COL));
+        } else {
+            return -1;
+        }
+    }
+
+    public int getDoctorId(String name){
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT * FROM " + DOCTOR_TABLE_NAME + " WHERE " + DOCTOR_NAME_COL + " = ?";
+        Cursor cursor = db.rawQuery(query, new String[]{name});
+        if(cursor.moveToFirst()){
+            return cursor.getInt(cursor.getColumnIndexOrThrow(DOCTOR_ID_COL));
+        } else {
+            return -1;
+        }
+    }
+
+    public boolean createAppointment(int patientId, int doctorId, String date, String time){
+        String query = "SELECT * FROM " + APPOINTMENT_TABLE_NAME + " WHERE " + APPOINTMENT_DATE_COL + " = ? AND " + APPOINTMENT_TIME_COL + " = ? AND " + APPOINTMENT_PATIENT_ID_COL + " = ? AND " + APPOINTMENT_DOCTOR_ID_COL + " = ?";
+        String[] args = new String[]{date, time, String.valueOf(patientId), String.valueOf(doctorId)};
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(query, args);
+        if(cursor.getCount() > 0){
+            return false;
+        }
+
+        ContentValues values = new ContentValues();
+
+        values.put(APPOINTMENT_PATIENT_ID_COL, patientId);
+        values.put(APPOINTMENT_DOCTOR_ID_COL, doctorId);
+        values.put(APPOINTMENT_DATE_COL, date);
+        values.put(APPOINTMENT_TIME_COL, time);
+        long result = db.insert(APPOINTMENT_TABLE_NAME, null, values);
+        return result != -1;
+    }
+
+    public boolean deleteAppointment(int id){
+        SQLiteDatabase db = this.getWritableDatabase();
+        String whereClause = APPOINTMENT_ID_COL + " = ?";
+        String[] whereArgs = new String[]{String.valueOf(id)};
+        int rowsDeleted = db.delete(APPOINTMENT_TABLE_NAME, whereClause, whereArgs);
+        return rowsDeleted > 0;
     }
 
 

@@ -36,7 +36,7 @@ public class ManagePatientsActivity extends AppCompatActivity {
         dbHandler = new DBHandler(this);
 
         ArrayList<String> patientList = dbHandler.getPatients();
-        lv = (ListView) findViewById(R.id.patientListView);
+        lv = findViewById(R.id.patientListView);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, patientList);
         // Set the adapter for the ListView
         lv.setAdapter(adapter);
@@ -67,6 +67,8 @@ public class ManagePatientsActivity extends AppCompatActivity {
                             adapter.clear();
                             adapter.addAll(updatedPatientList);
                             adapter.notifyDataSetChanged();
+                        } else {
+                            Toast.makeText(ManagePatientsActivity.this, "Error - Patient not deleted", Toast.LENGTH_LONG).show();
                         }
                         return item.getItemId() == R.id.menu_option1;
                     }
@@ -76,9 +78,5 @@ public class ManagePatientsActivity extends AppCompatActivity {
                 return true; // Returning true consumes the long click event
             }
         });
-    }
-
-    public void settingsPressed(View view){
-        Toast.makeText(this, "Settings are still being developed...", Toast.LENGTH_LONG).show();
     }
 }

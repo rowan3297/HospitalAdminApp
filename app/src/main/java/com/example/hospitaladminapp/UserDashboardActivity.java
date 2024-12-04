@@ -73,5 +73,29 @@ public class UserDashboardActivity extends AppCompatActivity {
             }
         });
 
+        appointmentsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+//                assert permissions != null;
+                if (permissions.equals("doctor")) {
+                    Intent i = new Intent(UserDashboardActivity.this, ManageAppointmentsActivity.class);
+                    i.putExtra("id", id);
+                    i.putExtra("access", "doctor");
+                    startActivity(i);
+
+                } else if (permissions.equals("patient")) {
+                    Intent i = new Intent(UserDashboardActivity.this, ManageAppointmentsActivity.class);
+                    i.putExtra("id", id);
+                    i.putExtra("access", "patient");
+                    startActivity(i);
+
+                } else {
+                    Toast.makeText(UserDashboardActivity.this, "An error occured with your permissions", Toast.LENGTH_LONG).show();
+                    startActivity(new Intent(UserDashboardActivity.this, MainActivity.class));
+                }
+            }
+        });
+
+
     }
 }

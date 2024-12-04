@@ -72,6 +72,8 @@ public class ManageDoctorsActivity extends AppCompatActivity {
                             adapter.clear();
                             adapter.addAll(updatedDoctorList);
                             adapter.notifyDataSetChanged();
+                        } else{
+                            Toast.makeText(ManageDoctorsActivity.this, "Doctor not deleted", Toast.LENGTH_LONG).show();
                         }
                         return item.getItemId() == R.id.menu_option1;
                     }
