@@ -13,6 +13,9 @@
         android:theme="@style/Theme.HospitalAdminApp"
         tools:targetApi="31">
         <activity
+            android:name=".UpdateAppointment"
+            android:exported="false" />
+        <activity
             android:name=".CreateAppointment"
             android:exported="false" />
         <activity

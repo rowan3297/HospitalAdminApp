@@ -13,6 +13,10 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import java.security.Key;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+
 public class CreateAppointment extends AppCompatActivity {
 
     EditText timeEditText, dateEditText,patientNameEditText;
@@ -30,33 +34,45 @@ public class CreateAppointment extends AppCompatActivity {
             return insets;
         });
 
+        // Get the id and permissions from the intent
         Intent intent = getIntent();
         int id = intent.getIntExtra("id", 0);
         String permissions = intent.getStringExtra("access");
 
         dbHandler = new DBHandler(this);
 
+        // Initialize the views
         timeEditText = findViewById(R.id.timeEditText);
         dateEditText = findViewById(R.id.dateEditText);
         patientNameEditText = findViewById(R.id.patientNameEditText);
-
         createAppointmentButton = findViewById(R.id.createAppointmentButton);
 
+        // Set the click listener for the create appointment button
         createAppointmentButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // Check if the user has the correct permissions
                 if (permissions.equals("patient") || permissions == null) {
                     Toast.makeText(CreateAppointment.this, "Permissions error - signing out", Toast.LENGTH_SHORT).show();
                     Intent intent = new Intent(CreateAppointment.this, MainActivity.class);
                     startActivity(intent);
                 }
+                // Get the input values
                 String time = timeEditText.getText().toString();
                 String date = dateEditText.getText().toString();
                 String patientName = patientNameEditText.getText().toString();
 
-                int patientID = dbHandler.getPatientId(patientName);
+                // Check if the input values are empty
+                if (time.isEmpty() || date.isEmpty() || patientName.isEmpty()) {
+                    Toast.makeText(CreateAppointment.this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
-                boolean appointmentCreated = dbHandler.createAppointment(patientID, id, date, time);
+                //Get the patientID from the patient name
+                int patientId = dbHandler.getPatientId(patientName);
+
+                // Create the appointment and then feed back to the user if it was successful or not
+                boolean appointmentCreated = dbHandler.createAppointment(patientId, id, date, time);
                 if (appointmentCreated) {
                     Toast.makeText(CreateAppointment.this, "Appointment created", Toast.LENGTH_SHORT).show();
                     Intent intent = new Intent(CreateAppointment.this, UserDashboardActivity.class);

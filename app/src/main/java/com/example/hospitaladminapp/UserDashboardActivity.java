@@ -15,7 +15,7 @@ import androidx.core.view.WindowInsetsCompat;
 public class UserDashboardActivity extends AppCompatActivity {
 
 
-    private Button doctorsButton, patientsButton, appointmentsButton, accountButton;
+    private Button doctorsButton, patientsButton, appointmentsButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +28,7 @@ public class UserDashboardActivity extends AppCompatActivity {
             return insets;
         });
 
+        //Get intent data
         Intent intent = getIntent();
         int id = intent.getIntExtra("id", 0);
         String permissions = intent.getStringExtra("access");
@@ -35,17 +36,18 @@ public class UserDashboardActivity extends AppCompatActivity {
         doctorsButton = findViewById(R.id.doctorsButton);
         patientsButton = findViewById(R.id.patientsButton);
         appointmentsButton = findViewById(R.id.appointmentsButton);
-        accountButton = findViewById(R.id.accountButton);
 
+        //Doctor management button
         doctorsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                assert permissions != null;
+                //Check a user is doctor and launch the correct activity
                 if (permissions.equals("doctor")) {
                     Intent i = new Intent(UserDashboardActivity.this, ManageDoctorsActivity.class);
                     i.putExtra("id", id);
                     startActivity(i);
 
+                    //Notify patients they cant access this page
                 } else if (permissions.equals("patient")){
                     Toast.makeText(UserDashboardActivity.this, "You do not have access to this page", Toast.LENGTH_LONG).show();
                 }else{
@@ -55,15 +57,17 @@ public class UserDashboardActivity extends AppCompatActivity {
             }
         });
 
+        //Patient management button
         patientsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                assert permissions != null;
+                //Check a user is doctor and launch the correct activity
                 if (permissions.equals("doctor")) {
                     Intent i = new Intent(UserDashboardActivity.this, ManagePatientsActivity.class);
                     i.putExtra("id", id);
                     startActivity(i);
 
+                    //Notify patients they cant access this page
                 } else if (permissions.equals("patient")){
                     Toast.makeText(UserDashboardActivity.this, "You do not have access to this page", Toast.LENGTH_LONG).show();
                 }else{
@@ -73,16 +77,19 @@ public class UserDashboardActivity extends AppCompatActivity {
             }
         });
 
+        //Appointment management button
         appointmentsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 //                assert permissions != null;
+                //Check a user is doctor and launch the correct activity
                 if (permissions.equals("doctor")) {
                     Intent i = new Intent(UserDashboardActivity.this, ManageAppointmentsActivity.class);
                     i.putExtra("id", id);
                     i.putExtra("access", "doctor");
                     startActivity(i);
 
+                    //Notify patients they cant access this page
                 } else if (permissions.equals("patient")) {
                     Intent i = new Intent(UserDashboardActivity.this, ManageAppointmentsActivity.class);
                     i.putExtra("id", id);
@@ -95,7 +102,5 @@ public class UserDashboardActivity extends AppCompatActivity {
                 }
             }
         });
-
-
     }
 }

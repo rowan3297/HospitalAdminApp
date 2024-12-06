@@ -39,13 +39,14 @@ public class ManageDoctorsActivity extends AppCompatActivity {
         });
 
         dbHandler = new DBHandler(this);
-
+        //Get all the doctors from the database and display them in the listview
         ArrayList<String> doctorList = dbHandler.getDoctors();
         lv = (ListView) findViewById(R.id.doctorListView);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, doctorList);
         // Set the adapter for the ListView
         lv.setAdapter(adapter);
 
+        //Long click to delete doctor
         lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
@@ -63,14 +64,19 @@ public class ManageDoctorsActivity extends AppCompatActivity {
                     public boolean onMenuItemClick(MenuItem item) {
                         // Handle option 1
                         //Code to delete doctor
-                        boolean doctorDeleted = dbHandler.deleteDoctor(itemValue);
+                        boolean doctorDeleted = false;
+                        try {
+                            doctorDeleted = dbHandler.deleteDoctor(itemValue);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
                         if(doctorDeleted) {
                             Toast.makeText(ManageDoctorsActivity.this, "Doctor deleted", Toast.LENGTH_LONG).show();
-                            ArrayList<String> updatedDoctorList = dbHandler.getDoctors();
+                            ArrayList<String> doctorList = dbHandler.getDoctors();
 
                             // Update the adapter's data and refresh the ListView
                             adapter.clear();
-                            adapter.addAll(updatedDoctorList);
+                            adapter.addAll(doctorList);
                             adapter.notifyDataSetChanged();
                         } else{
                             Toast.makeText(ManageDoctorsActivity.this, "Doctor not deleted", Toast.LENGTH_LONG).show();
@@ -83,9 +89,5 @@ public class ManageDoctorsActivity extends AppCompatActivity {
                 return true; // Returning true consumes the long click event
             }
         });
-    }
-
-    public void settingsPressed(View view){
-        Toast.makeText(this, "Settings are still being developed...", Toast.LENGTH_LONG).show();
     }
 }

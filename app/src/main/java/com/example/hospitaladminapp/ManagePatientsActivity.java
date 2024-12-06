@@ -33,9 +33,10 @@ public class ManagePatientsActivity extends AppCompatActivity {
             return insets;
         });
 
-        dbHandler = new DBHandler(this);
+        dbHandler = new DBHandler(this);dbHandler = new DBHandler(this);
 
         ArrayList<String> patientList = dbHandler.getPatients();
+        // Set up the ListView with the list of patients
         lv = findViewById(R.id.patientListView);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, patientList);
         // Set the adapter for the ListView
@@ -56,16 +57,14 @@ public class ManagePatientsActivity extends AppCompatActivity {
                 popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                     @Override
                     public boolean onMenuItemClick(MenuItem item) {
-                        // Handle option 1
-                        //Code to delete doctor
-                        boolean doctorDeleted = dbHandler.deletePatient(itemValue);
-                        if(doctorDeleted) {
+                        boolean patientDeleted = dbHandler.deletePatient(itemValue);
+                        if(patientDeleted) {
                             Toast.makeText(ManagePatientsActivity.this, "Patient deleted", Toast.LENGTH_LONG).show();
-                            ArrayList<String> updatedPatientList = dbHandler.getPatients();
+                            ArrayList<String> patientList = dbHandler.getPatients();
 
                             // Update the adapter's data and refresh the ListView
                             adapter.clear();
-                            adapter.addAll(updatedPatientList);
+                            adapter.addAll(patientList);
                             adapter.notifyDataSetChanged();
                         } else {
                             Toast.makeText(ManagePatientsActivity.this, "Error - Patient not deleted", Toast.LENGTH_LONG).show();

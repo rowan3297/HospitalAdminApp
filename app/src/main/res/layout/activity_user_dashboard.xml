@@ -50,14 +50,4 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/patientsButton" />
 
-    <Button
-        android:id="@+id/accountButton"
-        android:layout_width="282dp"
-        android:layout_height="47dp"
-        android:layout_marginTop="28dp"
-        android:text="Account"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.496"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/appointmentsButton" />
 </androidx.constraintlayout.widget.ConstraintLayout>

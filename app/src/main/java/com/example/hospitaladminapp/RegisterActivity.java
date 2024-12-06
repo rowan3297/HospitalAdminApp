@@ -70,26 +70,29 @@ public class RegisterActivity extends AppCompatActivity {
                     int ref = Integer.parseInt(refnum);
 
                     byte[] salt = getBytes();
-                    //Hash the password
                     String hashedPassword = hashPassword(password,salt);
 
                     //Check if user exists
                     if (!dbHandler.userExists(fullname)) {
 
                         Toast.makeText(RegisterActivity.this, Arrays.toString(salt), Toast.LENGTH_SHORT).show();
-//                        Log.d("SECURE_LOGIN", "Password hashing failed"+ salt);
 
                         int userID = Math.toIntExact(dbHandler.addUser(fullname, hashedPassword, ref,salt));
-                        //Reference can be given by the hospital to ensure only valid people sign up
-                        Intent i = new Intent(RegisterActivity.this, UserDashboardActivity.class);
-                        i.putExtra("id",userID);
-                        if (ref > 1000) {
-                            i.putExtra("access","doctor");
+                        if(userID == -1){
+                            Toast.makeText(RegisterActivity.this, "Error Signing up", Toast.LENGTH_SHORT).show();
                         } else {
-                            i.putExtra("access","patient");
-                            Toast.makeText(RegisterActivity.this, "You are a patient", Toast.LENGTH_SHORT).show();
+                            //Reference can be given by the hospital to ensure only valid people sign up
+                            Intent i = new Intent(RegisterActivity.this, UserDashboardActivity.class);
+                            i.putExtra("id", userID);
+                            //Check if user is a doctor or patient based on their reference
+                            if (ref > 1000) {
+                                i.putExtra("access", "doctor");
+                            } else {
+                                i.putExtra("access", "patient");
+                                Toast.makeText(RegisterActivity.this, "You are a patient", Toast.LENGTH_SHORT).show();
+                            }
+                            startActivity(i);
                         }
-                        startActivity(i);
                     }else {
                         //User already exists
                         Toast.makeText(RegisterActivity.this, "Account exists", Toast.LENGTH_SHORT).show();

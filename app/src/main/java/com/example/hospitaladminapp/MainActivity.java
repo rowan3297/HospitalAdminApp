@@ -1,6 +1,10 @@
 package com.example.hospitaladminapp;
 
+import static android.app.PendingIntent.getActivity;
+
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,7 +20,11 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import java.security.Key;
+import java.security.KeyPair;
 import java.security.MessageDigest;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
@@ -38,13 +46,13 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
+        //Initialise the views
         loginButtonPress = findViewById(R.id.loginButton);
         fullnameEditText = findViewById(R.id.fullnameInput);
         passwordEditText = findViewById(R.id.passwordInput);
         testTextView = findViewById(R.id.textView3);
 
         dbHandler = new DBHandler(this);
-
 
 
         //Log the user in
@@ -60,12 +68,14 @@ public class MainActivity extends AppCompatActivity {
                     //Get the users salt
                     byte[] salt = dbHandler.getSalt(fullname);
                     if (salt == null) {
-                        Toast.makeText(MainActivity.this, "User doesnt exist" + Arrays.toString(salt), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, "Error logging in", Toast.LENGTH_SHORT).show();
                         return;
                     }
+//                    Log.d("SALT", "Got the salt");
 
                     //Hash the password
                     String hashedPassword = hashPassword(password, salt);
+//                    Log.d("SALT", "Hashed the password");
 
                     //Check if user is a doctor
                     if (dbHandler.authenticateDoctor(fullname, hashedPassword) != -1) {
@@ -74,22 +84,24 @@ public class MainActivity extends AppCompatActivity {
                         i.putExtra("id",userID);
                         i.putExtra("access","doctor");
                         startActivity(i);
+                        Log.d("SALT", "Its a doctor");
+
+                    //Check if user is a patient
                     } else if (dbHandler.authenticatePatient(fullname, hashedPassword) != -1) {
                         int userID = dbHandler.authenticatePatient(fullname, hashedPassword);
                         Intent i = new Intent(MainActivity.this, UserDashboardActivity.class);
                         i.putExtra("id",userID);
                         i.putExtra("access","patient");
                         startActivity(i);
+//                        Log.d("SALT", "its a patient");
 
-                    }
-                    else {
+                        //If the user is not found notify the user
+                    } else {
                         Toast.makeText(MainActivity.this, "User doesnt exist", Toast.LENGTH_SHORT).show();
                     }
-
                 } else {
                     Toast.makeText(MainActivity.this, "Invalid input", Toast.LENGTH_SHORT).show();
                 }
-                testTextView.setText(String.format("%s %s", fullname, password));
             }
         });
     }
@@ -103,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
     }
     private String hashPassword(String password, byte[] salt) {
         try {
-            // Specify the key specifications for PBKDF2
+            // Specify the key specifications for PBKDF2 with sha 1
             KeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 65536, 256);
             SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
 
@@ -116,7 +128,7 @@ public class MainActivity extends AppCompatActivity {
             }
         } catch (Exception e) {
             // Log an error if hashing fails
-            Log.e("SECURE_LOGIN", "Password hashing failed", e);
+//            Log.e("SECURE_LOGIN", "Password hashing failed", e);
             return null; // Return null if an exception occurs
         }
         return password;
