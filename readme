@@ -1,0 +1,14 @@
+## For this assessment labs numbers 1345 were completed.
+##Each lab was a seperate commmit so please check commit logs for each one as they are labelled
+##
+## The app allows doctors and patients to sign up and be assigned/assign appoints.
+## Doctors are able to edit the appointments and even assign them to other doctors
+
+
+####################################################################
+##
+## PLEASE NOTE I AM AWARE TO NOT STORE KEYS AND SALTS, THEY ARE CLEARLY MARKED AND IT IS FOR DEMONSTRATION ONLY
+## ALSO DUE TO AN ERROR THE APP IS NOT VERIFIED AND WILL SOMETMES FAIL TO ACCESS ITS OWN DATABASE
+## IF THIS OCCURS CLOSE AND REOPEN THE APP AND IT SHOULD RESET
+##
+#####################################################################
